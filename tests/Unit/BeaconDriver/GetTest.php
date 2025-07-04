@@ -3,10 +3,10 @@
 declare(strict_types=1);
 
 use Beacon\PennantDriver\BeaconDriver;
+use Beacon\PennantDriver\BeaconScope;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
-use Tests\Fixtures\CustomScope;
 use Tests\Fixtures\EmptyScope;
 
 it('it resolves values for active features', function () {
@@ -28,13 +28,12 @@ it('it resolves values for active features', function () {
         return true;
     });
 
-    $result = $api->get('test', new EmptyScope());
+    $result = $api->get('test', new EmptyScope);
 
     expect($result)
         ->toBeTrue();
 
-
-    $result = $api->get('test2', new EmptyScope());
+    $result = $api->get('test2', new EmptyScope);
 
     expect($result)
         ->toBeTrue();
@@ -59,13 +58,12 @@ it('it resolves values for new features', function () {
         return true;
     });
 
-    $result = $api->get('test', new EmptyScope());
+    $result = $api->get('test', new EmptyScope);
 
     expect($result)
         ->toBeFalse();
 
-
-    $result = $api->get('test2', new EmptyScope());
+    $result = $api->get('test2', new EmptyScope);
 
     expect($result)
         ->toBeFalse();
@@ -85,8 +83,8 @@ it('it uses cached for multiple calls', function () {
         return true;
     });
 
-    $api->get('test', new EmptyScope());
-    $result = $api->get('test', new EmptyScope());
+    $api->get('test', new EmptyScope);
+    $result = $api->get('test', new EmptyScope);
 
     expect($result)
         ->toBeTrue();
@@ -100,7 +98,7 @@ it('it returns false for unknown features', function () {
         'featureStateResolvers' => [],
     ]);
 
-    $result = $api->get('test', new EmptyScope());
+    $result = $api->get('test', new EmptyScope);
 
     expect($result)
         ->toBeFalse();
@@ -125,12 +123,12 @@ it('it respects API active status', function () {
         return true;
     });
 
-    $result = $api->get('test', new EmptyScope());
+    $result = $api->get('test', new EmptyScope);
 
     expect($result)
         ->toBeTrue();
 
-    $result = $api->get('test2', new EmptyScope());
+    $result = $api->get('test2', new EmptyScope);
 
     expect($result)
         ->toBeFalse();
@@ -155,7 +153,7 @@ it('it gets multiple features', function () {
         return true;
     });
 
-    $result = $api->getAll(['test' => [new EmptyScope()], 'test2' => [new EmptyScope()]]);
+    $result = $api->getAll(['test' => [new EmptyScope], 'test2' => [new EmptyScope]]);
 
     expect($result)
         ->toBe([
@@ -178,7 +176,7 @@ it('it handles API errors', function () {
         return true;
     });
 
-    $result = $api->get('test', new EmptyScope());
+    $result = $api->get('test', new EmptyScope);
 
     expect($result)
         ->toBeFalse();
@@ -202,17 +200,17 @@ it('sends scope with request', function () {
         return true;
     });
 
-    $api->get('test', new CustomScope(['email' => 'davey@php.net']));
+    $api->get('test', new BeaconScope(['email' => 'davey@php.net']));
 
     Http::assertSent(function (Request $request) {
         expect($request->hasHeader('Authorization'))
             ->toBeTrue()
-        ->and($request->header('Authorization')[0])
+            ->and($request->header('Authorization')[0])
             ->toBe('Bearer secret')
-        ->and($request->url())
+            ->and($request->url())
             ->toBe('http://localhost/api/features/test')
-        ->and($request->body())
-            ->toBe('{"scopeType":"Tests\\\\Fixtures\\\\CustomScope","scope":"{\"email\":\"davey@php.net\"}","appName":"Laravel","environment":"testing","sessionId":null,"ip":"127.0.0.1","userAgent":"Symfony","referrer":null,"url":"http:\/\/localhost","method":"GET"}');
+            ->and($request->body())
+            ->toBe('{"scopeType":"Beacon\\\\PennantDriver\\\\BeaconScope","scope":{"email":"davey@php.net"},"appName":"Laravel","environment":"local","sessionId":null,"ip":"127.0.0.1","userAgent":"Symfony","referrer":null,"url":"http:\/\/localhost","method":"GET"}');
 
         return true;
     });

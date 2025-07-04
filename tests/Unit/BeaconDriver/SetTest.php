@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Beacon\PennantDriver\BeaconDriver;
 use Illuminate\Support\Facades\Http;
-use Tests\Fixtures\CustomScope;
+use Beacon\PennantDriver\BeaconScope;
 
 it('sets values for scope', function () {
     $api = app()->make(BeaconDriver::class, [
@@ -12,7 +12,7 @@ it('sets values for scope', function () {
         'featureStateResolvers' => [],
     ]);
 
-    $api->set('test', new CustomScope(['email' => 'davey@php.net']), true);
+    $api->set('test', new BeaconScope(['email' => 'davey@php.net']), true);
 
     expect($this->prop($api, 'resolvedFeatureStates'))
         ->toBe(['test' => ['{"email":"davey@php.net"}' => true]]);
@@ -24,8 +24,8 @@ it('sets values for multiple scopes', function () {
         'featureStateResolvers' => [],
     ]);
 
-    $api->set('test', new CustomScope(['email' => 'davey@php.net']), true);
-    $api->set('test2', new CustomScope(['email' => 'davey@php.net']), false);
+    $api->set('test', new BeaconScope(['email' => 'davey@php.net']), true);
+    $api->set('test2', new BeaconScope(['email' => 'davey@php.net']), false);
 
     expect($this->prop($api, 'resolvedFeatureStates'))
         ->toBe([
@@ -40,8 +40,8 @@ it('overrides values for same scope', function () {
         'featureStateResolvers' => [],
     ]);
 
-    $api->set('test', new CustomScope(['email' => 'davey@php.net']), true);
-    $api->set('test', new CustomScope(['email' => 'davey@php.net']), false);
+    $api->set('test', new BeaconScope(['email' => 'davey@php.net']), true);
+    $api->set('test', new BeaconScope(['email' => 'davey@php.net']), false);
 
     expect($this->prop($api, 'resolvedFeatureStates'))
         ->toBe(['test' => ['{"email":"davey@php.net"}' => false]]);

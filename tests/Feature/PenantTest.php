@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\User;
+use Beacon\PennantDriver\BeaconScope;
 use Beacon\PennantDriver\BeaconDriver;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Config;
@@ -10,7 +11,6 @@ use Illuminate\Support\Facades\Http;
 use Laravel\Pennant\Drivers\Decorator;
 use Laravel\Pennant\Feature;
 use function Pest\Laravel\actingAs;
-use Tests\Fixtures\CustomScope;
 
 beforeEach(function () {
     Config::set('pennant.default', 'beacon');
@@ -191,7 +191,7 @@ it('sends default context', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->body())
-            ->toBe('{"scopeType":"App\\\\Models\\\\User","scope":"{\"name\":\"Davey Shafik\",\"email\":\"davey@php.net\",\"email_verified_at\":\"2024-12-24T07:14:27.000000Z\"}","appName":"Laravel","environment":"testing","sessionId":null,"ip":"127.0.0.1","userAgent":"Symfony","referrer":null,"url":"http:\/\/localhost","method":"GET"}');
+            ->toBe('{"scopeType":"App\\\\Models\\\\User","scope":{"name":"Davey Shafik","email":"davey@php.net","email_verified_at":"2024-12-24T07:14:27.000000Z"},"appName":"Laravel","environment":"local","sessionId":null,"ip":"127.0.0.1","userAgent":"Symfony","referrer":null,"url":"http:\/\/localhost","method":"GET"}');
 
         return true;
     });
@@ -212,12 +212,12 @@ it('sends custom context', function () {
     });
 
     expect(
-        Feature::for(new CustomScope(['email' => 'davey@php.net']))->active('test')
+        Feature::for(new BeaconScope(['email' => 'davey@php.net']))->active('test')
     )->toBeTrue();
 
     Http::assertSent(function (Request $request) {
         expect($request->body())
-            ->toBe('{"scopeType":"Tests\\\\Fixtures\\\\CustomScope","scope":"{\"email\":\"davey@php.net\"}","appName":"Laravel","environment":"testing","sessionId":null,"ip":"127.0.0.1","userAgent":"Symfony","referrer":null,"url":"http:\/\/localhost","method":"GET"}');
+            ->toBe('{"scopeType":"Beacon\\\\PennantDriver\\\\BeaconScope","scope":{"email":"davey@php.net"},"appName":"Laravel","environment":"local","sessionId":null,"ip":"127.0.0.1","userAgent":"Symfony","referrer":null,"url":"http:\/\/localhost","method":"GET"}');
 
         return true;
     });

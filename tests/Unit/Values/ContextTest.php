@@ -3,10 +3,10 @@
 declare(strict_types=1);
 
 use Beacon\PennantDriver\Values\Context;
-use Tests\Fixtures\CustomScope;
+use Beacon\PennantDriver\BeaconScope;
 
 it('serializes data', function () {
-    $scope = new CustomScope(['foo' => 'bar']);
+    $scope = new BeaconScope(['foo' => 'bar']);
 
     $context = new Context(
         scopeType: $scope::class,
@@ -22,5 +22,5 @@ it('serializes data', function () {
     );
 
     expect($context->featureScopeSerialize())
-        ->toBe('{"scopeType":"Tests\\\\Fixtures\\\\CustomScope","scope":"{\"foo\":\"bar\"}","appName":"app_name","environment":"testing","sessionId":"session_id","ip":"ip","userAgent":"user_agent","referrer":"referrer","url":"url","method":"method"}');
+        ->toBe('{"scopeType":"Beacon\\\\PennantDriver\\\\BeaconScope","scope":{"foo":"bar"},"appName":"app_name","environment":"testing","sessionId":"session_id","ip":"ip","userAgent":"user_agent","referrer":"referrer","url":"url","method":"method"}');
 });

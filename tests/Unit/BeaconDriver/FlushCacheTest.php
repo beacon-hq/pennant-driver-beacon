@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Beacon\PennantDriver\BeaconDriver;
 use Illuminate\Support\Facades\Http;
-use Tests\Fixtures\CustomScope;
+use Beacon\PennantDriver\BeaconScope;
 
 it('flushes the cache', function () {
     $api = app()->make(BeaconDriver::class, [
@@ -12,7 +12,7 @@ it('flushes the cache', function () {
         'featureStateResolvers' => [],
     ]);
 
-    $api->set('test', new CustomScope(['email' => 'davey@php.net']), true);
+    $api->set('test', new BeaconScope(['email' => 'davey@php.net']), true);
 
     $api->flushCache();
 

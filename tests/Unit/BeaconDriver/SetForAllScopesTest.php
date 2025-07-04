@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Beacon\PennantDriver\BeaconDriver;
 use Illuminate\Support\Facades\Http;
-use Tests\Fixtures\CustomScope;
+use Beacon\PennantDriver\BeaconScope;
 
 it('sets for all scopes', function () {
     $api = app()->make(BeaconDriver::class, [
@@ -12,8 +12,8 @@ it('sets for all scopes', function () {
         'featureStateResolvers' => [],
     ]);
 
-    $api->set('test', new CustomScope(['email' => 'davey@php.net']), true);
-    $api->set('test', new CustomScope(['email' => 'taylor@laravel.com']), true);
+    $api->set('test', new BeaconScope(['email' => 'davey@php.net']), true);
+    $api->set('test', new BeaconScope(['email' => 'taylor@laravel.com']), true);
 
     $api->setForAllScopes('test', false);
 
