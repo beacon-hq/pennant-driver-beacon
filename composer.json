@@ -3,7 +3,7 @@
     "description": "The official Beacon driver for Laravel Pennant",
     "type": "library",
     "require": {
-        "dshafik/bag": "^1.3",
+        "dshafik/bag": "^2.5",
         "laravel/pennant": "^1.14"
     },
     "require-dev": {
