@@ -314,3 +314,28 @@ it('always fetches from API with no local cache', function () {
 
     Http::assertSequencesAreEmpty();
 });
+
+it('does not require a resolver to be defined', function () {
+    Http::fakeSequence()
+        ->push(['active' => true])
+        ->push(['active' => true, 'value' => 'test-value']);
+
+    Feature::define('test');
+    Feature::define('test-with-value');
+
+    expect(Feature::active('test'))
+        ->toBeTrue()
+        ->and(Feature::value('test-with-value'))
+        ->toBe('test-value');
+
+    Http::assertSequencesAreEmpty();
+});
+
+it('does not make HTTP request for undefined feature', function () {
+    Http::fake();
+
+    expect(Feature::active('test'))
+        ->toBeFalse();
+
+    Http::assertNothingSent();
+});
