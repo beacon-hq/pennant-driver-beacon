@@ -31,7 +31,7 @@ class BeaconDriverServiceProvider extends ServiceProvider
                 BeaconDriver::makeClient($config),
                 $app->make('events'),
                 $config,
-                $app->make('cache.store'),
+                $app->make('cache')->store(config('pennant.stores.beacon.cache_store')),
                 []
             );
         });

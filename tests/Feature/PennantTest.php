@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Features\ClassBasedFeatureActive;
+use App\Features\ClassBasedFeatureInactive;
 use App\Models\User;
-use Beacon\PennantDriver\BeaconScope;
 use Beacon\PennantDriver\BeaconDriver;
+use Beacon\PennantDriver\BeaconScope;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
@@ -41,7 +43,7 @@ it('uses the Beacon API', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toBe('http://localhost/api/features/test')
+            ->toBe('https://api.beacon-hq.dev/api/features/test')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -65,7 +67,7 @@ it('uses the API path prefix with pre and post slashes', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toBe('http://localhost/pennant/features/test')
+            ->toBe('https://api.beacon-hq.dev/pennant/features/test')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -89,7 +91,7 @@ it('uses the API path prefix with pre slashes', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toBe('http://localhost/pennant/features/test')
+            ->toBe('https://api.beacon-hq.dev/pennant/features/test')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -113,7 +115,7 @@ it('uses the API path prefix with post slashes', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toBe('http://localhost/pennant/features/test')
+            ->toBe('https://api.beacon-hq.dev/pennant/features/test')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -338,4 +340,18 @@ it('does not make HTTP request for undefined feature', function () {
         ->toBeFalse();
 
     Http::assertNothingSent();
+});
+
+it('resolves class-based features', function () {
+    Http::fake([
+        'active-feature' => Http::response(['active' => true]),
+        'inactive-feature' => Http::response(['active' => true]),
+    ]);
+
+    expect(Feature::active(ClassBasedFeatureActive::class))
+        ->toBeTrue()
+        ->and(Feature::active(ClassBasedFeatureInactive::class))
+        ->toBeFalse();
+
+    Http::assertSequencesAreEmpty();
 });
