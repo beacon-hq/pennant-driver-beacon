@@ -16,14 +16,13 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Laravel\Pennant\Contracts\CanListStoredFeatures;
-use Laravel\Pennant\Contracts\DefinesFeaturesExternally;
 use Laravel\Pennant\Contracts\Driver;
 use Laravel\Pennant\Contracts\FeatureScopeSerializeable;
 use Laravel\Pennant\Events\UnknownFeatureResolved;
 use Laravel\Pennant\Feature;
 use stdClass;
 
-class BeaconDriver implements CanListStoredFeatures, DefinesFeaturesExternally, Driver
+class BeaconDriver implements CanListStoredFeatures, Driver
 {
     /**
      * The resolved feature states.
@@ -243,16 +242,6 @@ class BeaconDriver implements CanListStoredFeatures, DefinesFeaturesExternally, 
         $this->resolvedFeatureStates = [];
     }
 
-    public function definedFeaturesForScope(mixed $scope): array
-    {
-        $features = $this->getFeatures($scope);
-        if ($features->clientError() || $features->serverError()) {
-            return [];
-        }
-
-        return $features->json('features');
-    }
-
     public static function makeClient(Repository $config)
     {
         return Http::baseUrl(Str::start(Str::chopStart($config->get('pennant.stores.beacon.path_prefix'), '/'), Str::finish($config->get('pennant.stores.beacon.url'), '/')))
@@ -270,15 +259,6 @@ class BeaconDriver implements CanListStoredFeatures, DefinesFeaturesExternally, 
 
         return $this->cache->flexible('pennant-feature:'.$featureName.':'.hash('sha256', Feature::serializeScope($scope)), [$this->config->get('pennant.stores.beacon.cache_ttl'), 30], function () use ($context, $featureName) {
             return $this->client->post('/features/'.$featureName, $context->toArray());
-        });
-    }
-
-    public function getFeatures(mixed $scope): Response
-    {
-        $context = $this->getContext($scope);
-
-        return $this->cache->flexible('pennant-features', [$this->config->get('pennant.stores.beacon.cache_ttl'), 30], function () use ($context) {
-            return $this->client->post('/features', $context->toArray());
         });
     }
 
