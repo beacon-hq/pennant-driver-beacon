@@ -9,6 +9,7 @@ use Beacon\PennantDriver\BeaconDriver;
 use Beacon\PennantDriver\BeaconScope;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Http;
 use Laravel\Pennant\Drivers\Decorator;
 use Laravel\Pennant\Feature;
@@ -234,9 +235,10 @@ it('returns custom value from API when local value is true', function () {
         return true;
     });
 
-    expect(
-        Feature::value('test')
-    )->toBe('custom-value');
+    expect(Feature::value('test'))
+        ->toBe('custom-value')
+        ->and(Context::get('beacon.feature_flags'))
+        ->toBe(['test' => ['active' => true, 'value' => 'custom-value']]);
 });
 
 it('does not return custom value from API when local value is false', function () {
@@ -248,9 +250,10 @@ it('does not return custom value from API when local value is false', function (
         return false;
     });
 
-    expect(
-        Feature::value('test')
-    )->toBeFalse();
+    expect(Feature::value('test'))
+        ->toBeFalse()
+        ->and(Context::get('beacon.feature_flags'))
+        ->toBe(['test' => ['active' => false]]);
 });
 
 it('return custom value from local', function () {
@@ -262,9 +265,10 @@ it('return custom value from local', function () {
         return 'custom-value';
     });
 
-    expect(
-        Feature::value('test')
-    )->toBe('custom-value');
+    expect(Feature::value('test'))
+        ->toBe('custom-value')
+        ->and(Context::get('beacon.feature_flags'))
+        ->toBe(['test' => ['active' => true, 'value' => 'custom-value']]);
 });
 
 it('does not return custom value from local', function () {
@@ -276,9 +280,10 @@ it('does not return custom value from local', function () {
         return false;
     });
 
-    expect(
-        Feature::value('test')
-    )->toBeFalse();
+    expect(Feature::value('test'))
+        ->toBeFalse()
+        ->and(Context::get('beacon.feature_flags'))
+        ->toBe(['test' => ['active' => false]]);
 });
 
 it('does not return custom value when API inactive', function () {
@@ -290,9 +295,10 @@ it('does not return custom value when API inactive', function () {
         return true;
     });
 
-    expect(
-        Feature::value('test')
-    )->toBeFalse();
+    expect(Feature::value('test'))
+        ->toBeFalse()
+        ->and(Context::get('beacon.feature_flags'))
+        ->toBe(['test' => ['active' => false]]);
 });
 
 it('always fetches from API with no local cache', function () {
@@ -328,7 +334,17 @@ it('does not require a resolver to be defined', function () {
     expect(Feature::active('test'))
         ->toBeTrue()
         ->and(Feature::value('test-with-value'))
-        ->toBe('test-value');
+        ->toBe('test-value')
+        ->and(Context::get('beacon.feature_flags'))
+        ->toBe([
+            'test' => [
+                'active' => true,
+            ],
+            'test-with-value' => [
+                'active' => true,
+                'value' => 'test-value',
+            ],
+        ]);
 
     Http::assertSequencesAreEmpty();
 });
@@ -337,7 +353,9 @@ it('does not make HTTP request for undefined feature', function () {
     Http::fake();
 
     expect(Feature::active('test'))
-        ->toBeFalse();
+        ->toBeFalse()
+        ->and(Context::get('beacon.feature_flags'))
+        ->toBe(null);
 
     Http::assertNothingSent();
 });
@@ -351,7 +369,12 @@ it('resolves class-based features', function () {
     expect(Feature::active(ClassBasedFeatureActive::class))
         ->toBeTrue()
         ->and(Feature::active(ClassBasedFeatureInactive::class))
-        ->toBeFalse();
+        ->toBeFalse()
+        ->and(Context::get('beacon.feature_flags'))
+        ->toBe([
+            'active-feature' => ['active' => true],
+            'inactive-feature' => ['active' => false],
+        ]);
 
     Http::assertSequencesAreEmpty();
 });

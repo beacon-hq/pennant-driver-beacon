@@ -13,6 +13,7 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Context as LaravelContext;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Laravel\Pennant\Contracts\CanListStoredFeatures;
@@ -51,7 +52,7 @@ class BeaconDriver implements CanListStoredFeatures, Driver
         protected CacheRepository $cache,
         protected array $featureStateResolvers,
     ) {
-        $this->unknownFeatureValue = new stdClass();
+        $this->unknownFeatureValue = new stdClass;
     }
 
     public static function useRemotePolicy(): Closure
@@ -88,6 +89,8 @@ class BeaconDriver implements CanListStoredFeatures, Driver
 
             $this->resolvedFeatureStates[$feature] ??= [];
             $this->resolvedFeatureStates[$feature][Feature::serializeScope($scope)] = $resolved;
+
+            $this->addToContext($feature, $resolved);
 
             return $resolved;
         };
@@ -278,5 +281,18 @@ class BeaconDriver implements CanListStoredFeatures, Driver
         );
 
         return $context;
+    }
+
+    protected function addToContext(string $feature, mixed $resolved): void
+    {
+        LaravelContext::add(
+            'beacon.feature_flags',
+            collect(LaravelContext::get('beacon.feature_flags', []))
+                ->put($feature, [
+                    'active' => $resolved !== false,
+                    ...(! is_bool($resolved) ? ['value' => $resolved] : []),
+                ])
+                ->toArray(),
+        );
     }
 }
