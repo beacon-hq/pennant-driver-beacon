@@ -11,7 +11,7 @@ use Illuminate\Config\Repository as ConfigRepository;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Http\Client\Response;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Context as LaravelContext;
 use Illuminate\Support\Facades\Http;
@@ -19,11 +19,12 @@ use Illuminate\Support\Str;
 use Laravel\Pennant\Contracts\CanListStoredFeatures;
 use Laravel\Pennant\Contracts\Driver;
 use Laravel\Pennant\Contracts\FeatureScopeSerializeable;
+use Laravel\Pennant\Contracts\HasFlushableCache;
 use Laravel\Pennant\Events\UnknownFeatureResolved;
 use Laravel\Pennant\Feature;
 use stdClass;
 
-class BeaconDriver implements CanListStoredFeatures, Driver
+class BeaconDriver implements CanListStoredFeatures, Driver, HasFlushableCache
 {
     /**
      * The resolved feature states.
@@ -70,20 +71,20 @@ class BeaconDriver implements CanListStoredFeatures, Driver
     public function define(string $feature, callable $resolver): void
     {
         $this->featureStateResolvers[$feature] = function (mixed $scope) use ($feature, $resolver) {
-            $result = $this->getFeature($scope, $feature);
-
-            if ($result->clientError() || $result->serverError()) {
+            try {
+                $result = $this->getFeature($scope, $feature);
+            } catch (RequestException) {
                 $this->events->dispatch(new UnknownFeatureResolved($feature, $scope));
 
                 return $this->unknownFeatureValue;
             }
 
             $resolved = false;
-            if ($result->json('active')) {
+            if ($result['active']) {
                 $resolved = $resolver($scope);
 
-                if ($resolved === true && $result->json('value') !== null) {
-                    $resolved = $result->json('value');
+                if ($resolved === true && ($result['value'] ?? null) !== null) {
+                    $resolved = $result['value'];
                 }
             }
 
@@ -214,7 +215,7 @@ class BeaconDriver implements CanListStoredFeatures, Driver
         } else {
             foreach ($features as $feature) {
                 foreach ($this->resolvedFeatureStates[$feature] as $scope => $_) {
-                    $this->cache->forget('pennant-feature:'.$feature.':'.hash('sha256', $scope));
+                    $this->cache->tags(['beacon', 'feature-flag'])->forget($feature.':'.hash('sha256', $scope));
                 }
                 unset($this->resolvedFeatureStates[$feature]);
             }
@@ -234,13 +235,8 @@ class BeaconDriver implements CanListStoredFeatures, Driver
      */
     public function flushCache(): void
     {
-        $this->cache->forget('pennant-features');
-
-        foreach ($this->resolvedFeatureStates as $feature => $scopes) {
-            foreach ($scopes as $scope => $_) {
-                $this->cache->forget('pennant-feature:'.$feature.':'.hash('sha256', $scope));
-            }
-        }
+        $this->cache->tags(['beacon'])->forget('pennant-features');
+        $this->cache->tags(['beacon', 'feature-flag'])->flush();
 
         $this->resolvedFeatureStates = [];
     }
@@ -254,14 +250,23 @@ class BeaconDriver implements CanListStoredFeatures, Driver
             ->withToken($config->get('pennant.stores.beacon.api_key'));
     }
 
-    public function getFeature(mixed $scope, string $feature): Response
+    public function getFeature(mixed $scope, string $feature): array
     {
         $context = $this->getContext($scope);
 
         $featureName = Str::slug($feature);
 
-        return $this->cache->flexible('pennant-feature:'.$featureName.':'.hash('sha256', Feature::serializeScope($scope)), [$this->config->get('pennant.stores.beacon.cache_ttl'), 30], function () use ($context, $featureName) {
-            return $this->client->post('/features/'.$featureName, $context->toArray());
+        return $this->cache->tags(['beacon', 'feature-flag'])->flexible($featureName.':'.hash('sha256', Feature::serializeScope($scope)), [$this->config->get('pennant.stores.beacon.cache_ttl'), 30], function () use ($context, $featureName) {
+            return $this->client->post('/features/'.$featureName, $context->toArray())->throw()->json();
+        });
+    }
+
+    public function getFeatures(mixed $scope): array
+    {
+        $context = $this->getContext($scope);
+
+        return $this->cache->tags(['beacon'])->flexible('pennant-features', [$this->config->get('pennant.stores.beacon.cache_ttl'), 30], function () use ($context) {
+            return $this->client->post('/features', $context->toArray())->throw()->json();
         });
     }
 
