@@ -9,6 +9,7 @@ use Beacon\PennantDriver\BeaconFeatureManager;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Pennant\Drivers\Decorator;
 use Laravel\Pennant\Feature;
 use Laravel\Pennant\FeatureManager;
 
@@ -16,7 +17,7 @@ class BeaconDriverServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(FeatureManager::class, fn ($app) => new BeaconFeatureManager($app));
+        $this->app->extend(FeatureManager::class, fn (FeatureManager $original, Application $app) => new BeaconFeatureManager($app, $original));
 
         $this->replaceConfigRecursivelyFrom(__DIR__.'/../../config/pennant.php', 'pennant');
     }
