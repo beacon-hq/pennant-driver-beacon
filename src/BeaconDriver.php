@@ -80,7 +80,7 @@ class BeaconDriver implements CanListStoredFeatures, Driver, HasFlushableCache
             }
 
             $resolved = false;
-            if ($result['active']) {
+            if ($result['active'] ?? false) {
                 $resolved = $resolver($scope);
 
                 if ($resolved === true && ($result['value'] ?? null) !== null) {
