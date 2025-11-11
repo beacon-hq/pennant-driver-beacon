@@ -55,7 +55,7 @@ class BeaconDriver implements CanListStoredFeatures, DefinesFeaturesExternally, 
         protected CacheRepository $cache,
         protected array $featureStateResolvers,
     ) {
-        $this->unknownFeatureValue = new stdClass();
+        $this->unknownFeatureValue = new stdClass;
     }
 
     public static function useRemotePolicy(): Closure
@@ -248,6 +248,7 @@ class BeaconDriver implements CanListStoredFeatures, DefinesFeaturesExternally, 
     public static function makeClient(Repository $config)
     {
         return Http::baseUrl(Str::start(Str::chopStart($config->get('pennant.stores.beacon.path_prefix'), '/'), Str::finish($config->get('pennant.stores.beacon.url'), '/')))
+            ->logWhen(config('pennant.stores.beacon.debug'))
             ->withHeaders([
                 'Accept' => 'application/json',
             ])
