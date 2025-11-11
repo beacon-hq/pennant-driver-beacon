@@ -25,6 +25,7 @@ BEACON_API_URL=https://your-beacon-instance.com
 BEACON_API_TOKEN=your-api-token
 BEACON_APP_NAME=YourAppName
 BEACON_API_PATH_PREFIX=/api
+BEACON_API_TIMEOUT=3000 # in milliseconds
 ```
 
 ### Pennant Configuration
@@ -47,6 +48,7 @@ return [
             'cache_store' => env('BEACON_CACHE_STORE', config('cache.default', 'array')),
             'cache_ttl' => env('BEACON_CACHE_TTL', 1800),
             'api_key' => env('BEACON_ACCESS_TOKEN'),
+            'api_timeout' => env('BEACON_API_TIMEOUT', 3000),
         ],
     ],
 ];
@@ -61,6 +63,7 @@ return [
 - **`cache_store`**: The cache store to use (default: Laravel's default cache store)
 - **`cache_ttl`**: Cache time-to-live in seconds (default: 1800 seconds / 30 minutes)
 - **`api_key`**: Your Beacon API authentication token
+- **`api_timeout`**: Beacon API request timeout, (recommended: no less than 100ms no greater than 3000ms)
 
 ## Usage
 
