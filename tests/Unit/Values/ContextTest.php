@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Beacon\PennantDriver\Values\Context;
 use Beacon\PennantDriver\BeaconScope;
+use Beacon\PennantDriver\Values\Context;
 
 it('serializes data', function () {
     $scope = new BeaconScope(['foo' => 'bar']);

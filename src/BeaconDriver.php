@@ -55,7 +55,7 @@ class BeaconDriver implements CanListStoredFeatures, DefinesFeaturesExternally, 
         protected CacheRepository $cache,
         protected array $featureStateResolvers,
     ) {
-        $this->unknownFeatureValue = new stdClass;
+        $this->unknownFeatureValue = new stdClass();
     }
 
     public static function useRemotePolicy(): Closure
