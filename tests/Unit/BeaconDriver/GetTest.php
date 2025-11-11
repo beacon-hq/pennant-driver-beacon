@@ -93,6 +93,10 @@ it('it uses cached for multiple calls', function () {
 });
 
 it('it returns false for unknown features', function () {
+    Http::fake([
+        'features/test' => Http::response(['active' => false]),
+    ]);
+
     $api = app()->make(BeaconDriver::class, [
         'client' => Http::createPendingRequest(),
         'featureStateResolvers' => [],

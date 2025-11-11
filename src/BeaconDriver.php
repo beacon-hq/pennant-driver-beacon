@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Context as LaravelContext;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Laravel\Pennant\Contracts\CanListStoredFeatures;
+use Laravel\Pennant\Contracts\DefinesFeaturesExternally;
 use Laravel\Pennant\Contracts\Driver;
 use Laravel\Pennant\Contracts\FeatureScopeSerializeable;
 use Laravel\Pennant\Contracts\HasFlushableCache;
@@ -25,7 +26,7 @@ use Laravel\Pennant\Events\UnknownFeatureResolved;
 use Laravel\Pennant\Feature;
 use stdClass;
 
-class BeaconDriver implements CanListStoredFeatures, Driver, HasFlushableCache
+class BeaconDriver implements CanListStoredFeatures, DefinesFeaturesExternally, Driver, HasFlushableCache
 {
     /**
      * The resolved feature states.
@@ -73,6 +74,10 @@ class BeaconDriver implements CanListStoredFeatures, Driver, HasFlushableCache
     {
         $this->featureStateResolvers[$feature] = function (mixed $scope) use ($feature, $resolver) {
             try {
+                if (class_exists($feature)) {
+                    $feature = app()->make($feature)->name ?? $feature;
+                }
+
                 $result = $this->getFeature($scope, $feature);
             } catch (RequestException) {
                 $this->events->dispatch(new UnknownFeatureResolved($feature, $scope));
@@ -105,7 +110,7 @@ class BeaconDriver implements CanListStoredFeatures, Driver, HasFlushableCache
      */
     public function defined(): array
     {
-        return array_keys($this->featureStateResolvers);
+        return $this->definedFeaturesForScope(null);
     }
 
     /**
@@ -167,9 +172,7 @@ class BeaconDriver implements CanListStoredFeatures, Driver, HasFlushableCache
     protected function resolveValue(string $feature, mixed $scope): mixed
     {
         if ($this->missingResolver($feature)) {
-            $this->events->dispatch(new UnknownFeatureResolved($feature, $scope));
-
-            return $this->unknownFeatureValue;
+            $this->define($feature, static::useRemotePolicy());
         }
 
         return $this->featureStateResolvers[$feature]($scope);
@@ -259,10 +262,12 @@ class BeaconDriver implements CanListStoredFeatures, Driver, HasFlushableCache
         $featureName = Str::slug($feature);
 
         try {
-            return $this->cache->tags(['beacon', 'feature-flag'])->flexible($featureName.':'.hash('sha256', Feature::serializeScope($scope)), [$this->config->get('pennant.stores.beacon.cache_ttl'), 30], function () use ($context, $featureName) {
+            $cacheTtl = $this->config->get('pennant.stores.beacon.cache_ttl');
+
+            return $this->cache->tags(['beacon', 'feature-flag'])->flexible($featureName.':'.hash('sha256', Feature::serializeScope($scope)), [$cacheTtl, $cacheTtl + 30], function () use ($context, $featureName) {
                 return $this->client->post('/features/'.$featureName, $context->toArray())->throw()->json();
             });
-        } catch (ConnectionException) {
+        } catch (ConnectionException|RequestException) {
             return [
                 'feature-flag' => $featureName,
                 'value' => null,
@@ -309,5 +314,27 @@ class BeaconDriver implements CanListStoredFeatures, Driver, HasFlushableCache
                 ])
                 ->toArray(),
         );
+    }
+
+    public function definedFeaturesForScope(mixed $scope): array
+    {
+        $cacheTtl = $this->config->get('pennant.stores.beacon.cache_ttl');
+
+        $context = $this->getContext($scope);
+
+        try {
+            return $this->cache->tags(['beacon', 'feature-flags'])->flexible('pennant-features-for-scope:'.$context->appName.':'.$context->environment, [$cacheTtl, $cacheTtl + 30], function () use ($context) {
+                $features = $this->client->post('/features', ['app_name' => $context->appName, 'environment' => $context->environment])->throw()->json();
+                collect($features)->each(function ($feature) {
+                    if (! isset($this->featureStateResolvers[$feature])) {
+                        Feature::define($feature);
+                    }
+                });
+
+                return $features;
+            });
+        } catch (RequestException|ConnectionException) {
+            return [];
+        }
     }
 }
