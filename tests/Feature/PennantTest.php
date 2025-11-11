@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Features\ClassBasedFeatureActive;
 use App\Features\ClassBasedFeatureInactive;
+use App\Features\ClassBasedFeatureResolved;
 use App\Models\User;
 use Beacon\PennantDriver\BeaconDriver;
 use Beacon\PennantDriver\BeaconScope;
@@ -32,6 +33,7 @@ it('uses the Beacon driver', function () {
 
 it('uses the Beacon API', function () {
     Http::fake([
+        'features' => Http::response(['test']),
         'test' => Http::response(['active' => true]),
     ]);
 
@@ -44,7 +46,7 @@ it('uses the Beacon API', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toBe('https://api.beacon-hq.dev/api/features/test')
+            ->toStartWith('https://api.beacon-hq.dev/api/features')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -56,6 +58,7 @@ it('uses the API path prefix with pre and post slashes', function () {
     Config::set('pennant.stores.beacon.path_prefix', '/pennant/');
 
     Http::fake([
+        'features' => Http::response(['test']),
         'test' => Http::response(['active' => true]),
     ]);
 
@@ -68,7 +71,7 @@ it('uses the API path prefix with pre and post slashes', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toBe('https://api.beacon-hq.dev/pennant/features/test')
+            ->toStartWith('https://api.beacon-hq.dev/pennant/features')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -80,6 +83,7 @@ it('uses the API path prefix with pre slashes', function () {
     Config::set('pennant.stores.beacon.path_prefix', '/pennant');
 
     Http::fake([
+        'features' => Http::response(['test']),
         'test' => Http::response(['active' => true]),
     ]);
 
@@ -92,7 +96,7 @@ it('uses the API path prefix with pre slashes', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toBe('https://api.beacon-hq.dev/pennant/features/test')
+            ->toStartWith('https://api.beacon-hq.dev/pennant/features')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -104,6 +108,7 @@ it('uses the API path prefix with post slashes', function () {
     Config::set('pennant.stores.beacon.path_prefix', 'pennant/');
 
     Http::fake([
+        'features' => Http::response(['test']),
         'test' => Http::response(['active' => true]),
     ]);
 
@@ -116,7 +121,7 @@ it('uses the API path prefix with post slashes', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toBe('https://api.beacon-hq.dev/pennant/features/test')
+            ->toStartWith('https://api.beacon-hq.dev/pennant/features')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -128,6 +133,7 @@ it('uses the API URL', function () {
     Config::set('pennant.stores.beacon.url', 'http://example.org');
 
     Http::fake([
+        'features' => Http::response(['test']),
         'test' => Http::response(['active' => true]),
     ]);
 
@@ -140,7 +146,7 @@ it('uses the API URL', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toBe('http://example.org/api/features/test')
+            ->toStartWith('http://example.org/api/features')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -152,6 +158,7 @@ it('uses the API URL with trailing slash', function () {
     Config::set('pennant.stores.beacon.url', 'http://example.org/');
 
     Http::fake([
+        'features' => Http::response(['test']),
         'test' => Http::response(['active' => true]),
     ]);
 
@@ -164,7 +171,7 @@ it('uses the API URL with trailing slash', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toBe('http://example.org/api/features/test')
+            ->toStartWith('http://example.org/api/features')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -178,6 +185,7 @@ it('sends default context', function () {
     actingAs($user);
 
     Http::fake([
+        'features' => Http::response(['test']),
         'test' => Http::response(['active' => true]),
     ]);
 
@@ -193,7 +201,12 @@ it('sends default context', function () {
     )->toBeTrue();
 
     Http::assertSent(function (Request $request) {
-        expect($request->body())
+        $body = $request->body();
+        if ($body === '{"app_name":"Laravel","environment":"local"}') {
+            return true;
+        }
+
+        expect($body)
             ->toBe('{"scopeType":"App\\\\Models\\\\User","scope":{"name":"Davey Shafik","email":"davey@php.net","email_verified_at":"2024-12-24T07:14:27.000000Z"},"appName":"Laravel","environment":"local","sessionId":null,"ip":"127.0.0.1","userAgent":"Symfony","referrer":null,"url":"http:\/\/localhost","method":"GET"}');
 
         return true;
@@ -204,6 +217,7 @@ it('sends custom context', function () {
     Config::set('pennant.default', 'beacon');
 
     Http::fake([
+        'features' => Http::response(['test']),
         'test' => Http::response(['active' => true]),
     ]);
 
@@ -219,6 +233,10 @@ it('sends custom context', function () {
     )->toBeTrue();
 
     Http::assertSent(function (Request $request) {
+        if ($request->body() === '{"app_name":"Laravel","environment":"local"}') {
+            return true;
+        }
+
         expect($request->body())
             ->toBe('{"scopeType":"Beacon\\\\PennantDriver\\\\BeaconScope","scope":{"email":"davey@php.net"},"appName":"Laravel","environment":"local","sessionId":null,"ip":"127.0.0.1","userAgent":"Symfony","referrer":null,"url":"http:\/\/localhost","method":"GET"}');
 
@@ -228,6 +246,7 @@ it('sends custom context', function () {
 
 it('returns custom value from API when local value is true', function () {
     Http::fake([
+        'features' => Http::response(['test']),
         'test' => Http::response(['active' => true, 'value' => 'custom-value']),
     ]);
 
@@ -243,6 +262,7 @@ it('returns custom value from API when local value is true', function () {
 
 it('does not return custom value from API when local value is false', function () {
     Http::fake([
+        'features' => Http::response(['test']),
         'test' => Http::response(['active' => true, 'value' => 'custom-value']),
     ]);
 
@@ -259,6 +279,7 @@ it('does not return custom value from API when local value is false', function (
 it('return custom value from local', function () {
     Http::fake([
         'test' => Http::response(['active' => true]),
+        'features' => Http::response(['test']),
     ]);
 
     Feature::define('test', function () {
@@ -274,6 +295,7 @@ it('return custom value from local', function () {
 it('does not return custom value from local', function () {
     Http::fake([
         'test' => Http::response(['active' => true]),
+        'features' => Http::response(['test']),
     ]);
 
     Feature::define('test', function () {
@@ -289,6 +311,7 @@ it('does not return custom value from local', function () {
 it('does not return custom value when API inactive', function () {
     Http::fake([
         'test' => Http::response(['active' => false]),
+        'features' => Http::response(['test']),
     ]);
 
     Feature::define('test', function () {
@@ -303,6 +326,7 @@ it('does not return custom value when API inactive', function () {
 
 it('always fetches from API with no local cache', function () {
     Http::fakeSequence()
+        ->push(['test'])
         ->push(['active' => true])
         ->push(['active' => false]);
 
@@ -325,6 +349,7 @@ it('always fetches from API with no local cache', function () {
 
 it('does not require a resolver to be defined', function () {
     Http::fakeSequence()
+        ->push(['test'])
         ->push(['active' => true])
         ->push(['active' => true, 'value' => 'test-value']);
 
@@ -349,32 +374,69 @@ it('does not require a resolver to be defined', function () {
     Http::assertSequencesAreEmpty();
 });
 
-it('does not make HTTP request for undefined feature', function () {
-    Http::fake();
+it('does makes HTTP request for undefined feature', function () {
+    Http::fake([
+        'features' => Http::response(['test']),
+        'test' => Http::response(['feature_flag' => 'test', 'value' => null, 'active' => false]),
+    ]);
 
     expect(Feature::active('test'))
         ->toBeFalse()
         ->and(Context::get('beacon.feature_flags'))
-        ->toBe(null);
-
-    Http::assertNothingSent();
+        ->toBe(['test' => ['active' => false]]);
 });
 
 it('resolves class-based features', function () {
     Http::fake([
+        'features' => Http::response(['active-feature', 'inactive-feature']),
+        'inactive-feature' => Http::response(['active' => false]),
         'active-feature' => Http::response(['active' => true]),
-        'inactive-feature' => Http::response(['active' => true]),
+        'resolved-feature' => Http::response(['active' => true]),
     ]);
 
     expect(Feature::active(ClassBasedFeatureActive::class))
         ->toBeTrue()
         ->and(Feature::active(ClassBasedFeatureInactive::class))
         ->toBeFalse()
+        ->and(Feature::active(ClassBasedFeatureResolved::class))
+        ->toBeTrue()
         ->and(Context::get('beacon.feature_flags'))
         ->toBe([
             'active-feature' => ['active' => true],
             'inactive-feature' => ['active' => false],
+            'resolved-feature' => ['active' => true, 'value' => 'test-value'],
         ]);
 
     Http::assertSequencesAreEmpty();
+});
+
+it('fetches external features', function () {
+    Http::fake([
+        'features' => Http::response(['test-feature-1', 'test-feature-2', 'test-feature-3']),
+        'test-feature-1' => Http::response(['feature_flag' => 'test-feature-1', 'value' => null, 'active' => true]),
+        'test-feature-2' => Http::response(['feature_flag' => 'test-feature-2', 'value' => 'test-value', 'active' => true]),
+        'test-feature-3' => Http::response(['feature_flag' => 'test-feature-3', 'value' => null, 'active' => false]),
+    ]);
+
+    expect(Feature::all())
+        ->toBe([
+            'test-feature-1' => true,
+            'test-feature-2' => 'test-value',
+            'test-feature-3' => false,
+        ]);
+});
+
+it('fetches features dynamically', function () {
+    Http::fake([
+        'features' => Http::response(['test-feature-1', 'test-feature-2', 'test-feature-3']),
+        'test-feature-1' => Http::response(['feature_flag' => 'test-feature-1', 'value' => null, 'active' => true]),
+        'test-feature-2' => Http::response(['feature_flag' => 'test-feature-2', 'value' => 'test-value', 'active' => true]),
+    ]);
+
+    expect(Feature::active('test-feature-1'))
+        ->toBeTrue()
+        ->and(Feature::active('test-feature-2'))
+        ->toBeTrue()
+        ->and(Feature::value('test-feature-2'))
+        ->toBe('test-value');
 });

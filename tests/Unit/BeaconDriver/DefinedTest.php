@@ -8,6 +8,10 @@ use Beacon\PennantDriver\BeaconDriver;
 use Illuminate\Support\Facades\Http;
 
 it('can retrieve defined features', function () {
+    Http::fake([
+        'features' => Http::response(['test', 'test2']),
+    ]);
+
     $api = app()->make(BeaconDriver::class, [
         'client' => Http::createPendingRequest(),
         'featureStateResolvers' => [],
@@ -26,6 +30,10 @@ it('can retrieve defined features', function () {
 });
 
 it('returns with no defined features', function () {
+    Http::fake([
+        'features' => Http::response([]),
+    ]);
+
     $api = app()->make(BeaconDriver::class, [
         'client' => Http::createPendingRequest(),
         'featureStateResolvers' => [],
