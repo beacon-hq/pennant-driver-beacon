@@ -4,6 +4,8 @@
     "type": "library",
     "require": {
         "beacon-hq/bag": "^2.6",
+        "bilfeldt/laravel-http-client-logger": "^2.4",
+        "illuminate/log": "*",
         "laravel/pennant": "^1.14"
     },
     "require-dev": {
@@ -17,7 +19,8 @@
         "pestphp/pest-plugin-arch": "^3.0",
         "pestphp/pest-plugin-faker": "^3.0",
         "pestphp/pest-plugin-laravel": "^3.0",
-        "pestphp/pest-plugin-type-coverage": "^3.2"
+        "pestphp/pest-plugin-type-coverage": "^3.2",
+        "timacdonald/log-fake": "^2.4"
     },
     "license": "MIT",
     "autoload": {

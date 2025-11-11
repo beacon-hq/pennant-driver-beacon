@@ -212,7 +212,7 @@ it('sends scope with request', function () {
             ->and($request->header('Authorization')[0])
             ->toBe('Bearer secret')
             ->and($request->url())
-            ->toBe('https://api.beacon-hq.dev/api/features/test')
+            ->toBe('https://api.beaconhq.io/api/features/test')
             ->and($request->body())
             ->toBe('{"scopeType":"Beacon\\\\PennantDriver\\\\BeaconScope","scope":{"email":"davey@php.net"},"appName":"Laravel","environment":"local","sessionId":null,"ip":"127.0.0.1","userAgent":"Symfony","referrer":null,"url":"http:\/\/localhost","method":"GET"}');
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests;
 
 use Beacon\PennantDriver\Providers\BeaconDriverServiceProvider;
+use Bilfeldt\LaravelHttpClientLogger\LaravelHttpClientLoggerServiceProvider;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
 
 abstract class TestCase extends OrchestraTestCase
@@ -18,6 +19,7 @@ abstract class TestCase extends OrchestraTestCase
     {
         return [
             BeaconDriverServiceProvider::class,
+            LaravelHttpClientLoggerServiceProvider::class,
         ];
     }
 }

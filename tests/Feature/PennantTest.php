@@ -12,9 +12,12 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Laravel\Pennant\Drivers\Decorator;
 use Laravel\Pennant\Feature;
 use function Pest\Laravel\actingAs;
+use TiMacDonald\Log\LogEntry;
+use TiMacDonald\Log\LogFake;
 
 beforeEach(function () {
     Config::set('pennant.default', 'beacon');
@@ -46,7 +49,7 @@ it('uses the Beacon API', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toStartWith('https://api.beacon-hq.dev/api/features')
+            ->toStartWith('https://api.beaconhq.io/api/features')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -71,7 +74,7 @@ it('uses the API path prefix with pre and post slashes', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toStartWith('https://api.beacon-hq.dev/pennant/features')
+            ->toStartWith('https://api.beaconhq.io/pennant/features')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -96,7 +99,7 @@ it('uses the API path prefix with pre slashes', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toStartWith('https://api.beacon-hq.dev/pennant/features')
+            ->toStartWith('https://api.beaconhq.io/pennant/features')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -121,7 +124,7 @@ it('uses the API path prefix with post slashes', function () {
 
     Http::assertSent(function (Request $request) {
         expect($request->url())
-            ->toStartWith('https://api.beacon-hq.dev/pennant/features')
+            ->toStartWith('https://api.beaconhq.io/pennant/features')
             ->and($request->hasHeader('Authorization'))
             ->toBeTrue();
 
@@ -415,4 +418,42 @@ it('fetches features dynamically', function () {
         ->toBeTrue()
         ->and(Feature::value('test-feature-2'))
         ->toBe('test-value');
+});
+
+it('logs requests when debugging enabled', function () {
+    Config::set('pennant.stores.beacon.debug', true);
+
+    LogFake::bind();
+
+    Http::fake([
+        'features' => Http::response(['test-feature-1', 'test-feature-2', 'test-feature-3']),
+        'test-feature-1' => Http::response(['feature_flag' => 'test-feature-1', 'value' => null, 'active' => true]),
+    ]);
+
+    expect(Feature::active('test-feature-1'))
+        ->toBeTrue();
+
+    Log::assertLoggedTimes(function (LogEntry $log) {
+        return $log->level === 'debug' && str_contains($log->message, 'POST /api/features') && ! str_contains($log->message, 'POST /api/features/test-feature-1');
+    }, 1);
+
+    Log::assertLoggedTimes(function (LogEntry $log) {
+        return $log->level === 'debug' && str_contains($log->message, 'POST /api/features/test-feature-1');
+    }, 1);
+});
+
+it('does not log requests when debugging disabled', function () {
+    Config::set('pennant.stores.beacon.debug', false);
+
+    LogFake::bind();
+
+    Http::fake([
+        'features' => Http::response(['test-feature-1', 'test-feature-2', 'test-feature-3']),
+        'test-feature-1' => Http::response(['feature_flag' => 'test-feature-1', 'value' => null, 'active' => true]),
+    ]);
+
+    expect(Feature::active('test-feature-1'))
+        ->toBeTrue();
+
+    Log::assertNothingLogged();
 });

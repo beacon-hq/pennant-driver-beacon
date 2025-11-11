@@ -2,7 +2,7 @@
 
 The official Beacon driver for Laravel Pennant, enabling seamless feature flag management through the Beacon platform.
 
-[Full Documentation](https://beacon-hq.dev/docs/)
+[Full Documentation](https://beaconhq.io/docs/)
 
 ## Installation
 
@@ -43,7 +43,7 @@ return [
             'driver' => 'beacon',
             'app_name' => env('BEACON_APP_NAME', env('APP_NAME', 'Laravel')),
             'environment' => env('BEACON_ENVIRONMENT', env('APP_ENV', 'local')),
-            'url' => env('BEACON_API_URL', 'https://api.beacon-hq.dev/'),
+            'url' => env('BEACON_API_URL', 'https://api.beaconhq.io/'),
             'path_prefix' => env('BEACON_API_PATH_PREFIX', '/api'),
             'cache_store' => env('BEACON_CACHE_STORE', config('cache.default', 'array')),
             'cache_ttl' => env('BEACON_CACHE_TTL', 1800),
@@ -180,4 +180,4 @@ This package is open-sourced software licensed under the [MIT license](LICENSE).
 
 ## Support
 
-For support, please contact [Beacon HQ](https://beacon-hq.dev) or open an issue on GitHub.
+For support, please contact [Beacon HQ](https://beaconhq.io) or open an issue on GitHub.
