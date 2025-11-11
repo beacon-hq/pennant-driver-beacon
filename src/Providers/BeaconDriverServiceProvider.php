@@ -5,19 +5,15 @@ declare(strict_types=1);
 namespace Beacon\PennantDriver\Providers;
 
 use Beacon\PennantDriver\BeaconDriver;
-use Beacon\PennantDriver\BeaconFeatureManager;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Pennant\Feature;
-use Laravel\Pennant\FeatureManager;
 
 class BeaconDriverServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->extend(FeatureManager::class, fn (FeatureManager $original, Application $app) => new BeaconFeatureManager($app, $original));
-
         $this->replaceConfigRecursivelyFrom(__DIR__.'/../../config/pennant.php', 'pennant');
     }
 

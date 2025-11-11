@@ -327,7 +327,7 @@ class BeaconDriver implements CanListStoredFeatures, DefinesFeaturesExternally, 
                 $features = $this->client->post('/features', ['app_name' => $context->appName, 'environment' => $context->environment])->throw()->json();
                 collect($features)->each(function ($feature) {
                     if (! isset($this->featureStateResolvers[$feature])) {
-                        Feature::define($feature);
+                        Feature::define($feature, static::useRemotePolicy());
                     }
                 });
 
