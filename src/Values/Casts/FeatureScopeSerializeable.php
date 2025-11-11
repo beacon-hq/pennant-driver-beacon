@@ -7,7 +7,6 @@ namespace Beacon\PennantDriver\Values\Casts;
 use Bag\Bag;
 use Bag\Casts\CastsPropertyGet;
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Collection;
 use JsonSerializable;
 use Laravel\Pennant\Contracts\FeatureScopeSerializeable as FeatureScopeSerializeableInterface;

@@ -28,12 +28,12 @@ it('it resolves values for active features', function () {
         return true;
     });
 
-    $result = $api->get('test', new EmptyScope);
+    $result = $api->get('test', new EmptyScope());
 
     expect($result)
         ->toBeTrue();
 
-    $result = $api->get('test2', new EmptyScope);
+    $result = $api->get('test2', new EmptyScope());
 
     expect($result)
         ->toBeTrue();
@@ -58,12 +58,12 @@ it('it resolves values for new features', function () {
         return true;
     });
 
-    $result = $api->get('test', new EmptyScope);
+    $result = $api->get('test', new EmptyScope());
 
     expect($result)
         ->toBeFalse();
 
-    $result = $api->get('test2', new EmptyScope);
+    $result = $api->get('test2', new EmptyScope());
 
     expect($result)
         ->toBeFalse();
@@ -83,8 +83,8 @@ it('it uses cached for multiple calls', function () {
         return true;
     });
 
-    $api->get('test', new EmptyScope);
-    $result = $api->get('test', new EmptyScope);
+    $api->get('test', new EmptyScope());
+    $result = $api->get('test', new EmptyScope());
 
     expect($result)
         ->toBeTrue();
@@ -102,7 +102,7 @@ it('it returns false for unknown features', function () {
         'featureStateResolvers' => [],
     ]);
 
-    $result = $api->get('test', new EmptyScope);
+    $result = $api->get('test', new EmptyScope());
 
     expect($result)
         ->toBeFalse();
@@ -127,12 +127,12 @@ it('it respects API active status', function () {
         return true;
     });
 
-    $result = $api->get('test', new EmptyScope);
+    $result = $api->get('test', new EmptyScope());
 
     expect($result)
         ->toBeTrue();
 
-    $result = $api->get('test2', new EmptyScope);
+    $result = $api->get('test2', new EmptyScope());
 
     expect($result)
         ->toBeFalse();
@@ -157,7 +157,7 @@ it('it gets multiple features', function () {
         return true;
     });
 
-    $result = $api->getAll(['test' => [new EmptyScope], 'test2' => [new EmptyScope]]);
+    $result = $api->getAll(['test' => [new EmptyScope()], 'test2' => [new EmptyScope()]]);
 
     expect($result)
         ->toBe([
@@ -180,7 +180,7 @@ it('it handles API errors', function () {
         return true;
     });
 
-    $result = $api->get('test', new EmptyScope);
+    $result = $api->get('test', new EmptyScope());
 
     expect($result)
         ->toBeFalse();

@@ -9,7 +9,6 @@ use Beacon\PennantDriver\BeaconFeatureManager;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
-use Laravel\Pennant\Drivers\Decorator;
 use Laravel\Pennant\Feature;
 use Laravel\Pennant\FeatureManager;
 

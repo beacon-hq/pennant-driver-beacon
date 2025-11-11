@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use Beacon\PennantDriver\BeaconDriver;
-use Illuminate\Support\Facades\Http;
 use Beacon\PennantDriver\BeaconScope;
+use Illuminate\Support\Facades\Http;
 
 it('deletes feature values', function () {
     $api = app()->make(BeaconDriver::class, [

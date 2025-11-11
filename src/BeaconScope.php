@@ -9,7 +9,9 @@ use Laravel\Pennant\Contracts\FeatureScopeSerializeable;
 
 class BeaconScope implements FeatureScopeSerializeable, JsonSerializable
 {
-    public function __construct(public mixed $scope) {}
+    public function __construct(public mixed $scope)
+    {
+    }
 
     public function featureScopeSerialize(): string
     {
