@@ -10,6 +10,7 @@ use Illuminate\Cache\Repository as CacheRepository;
 use Illuminate\Config\Repository as ConfigRepository;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
@@ -247,7 +248,8 @@ class BeaconDriver implements CanListStoredFeatures, Driver, HasFlushableCache
             ->withHeaders([
                 'Accept' => 'application/json',
             ])
-            ->withToken($config->get('pennant.stores.beacon.api_key'));
+            ->withToken($config->get('pennant.stores.beacon.api_key'))
+            ->timeout($config->get('pennant.stores.beacon.api_timeout', 3000) / 1000);
     }
 
     public function getFeature(mixed $scope, string $feature): array
@@ -256,9 +258,17 @@ class BeaconDriver implements CanListStoredFeatures, Driver, HasFlushableCache
 
         $featureName = Str::slug($feature);
 
-        return $this->cache->tags(['beacon', 'feature-flag'])->flexible($featureName.':'.hash('sha256', Feature::serializeScope($scope)), [$this->config->get('pennant.stores.beacon.cache_ttl'), 30], function () use ($context, $featureName) {
-            return $this->client->post('/features/'.$featureName, $context->toArray())->throw()->json();
-        });
+        try {
+            return $this->cache->tags(['beacon', 'feature-flag'])->flexible($featureName.':'.hash('sha256', Feature::serializeScope($scope)), [$this->config->get('pennant.stores.beacon.cache_ttl'), 30], function () use ($context, $featureName) {
+                return $this->client->post('/features/'.$featureName, $context->toArray())->throw()->json();
+            });
+        } catch (ConnectionException) {
+            return [
+                'feature-flag' => $featureName,
+                'value' => null,
+                'active' => false,
+            ];
+        }
     }
 
     public function getFeatures(mixed $scope): array

@@ -13,6 +13,7 @@ return [
             'cache_store' => env('BEACON_CACHE_STORE', config('cache.default', 'array')),
             'cache_ttl' => env('BEACON_CACHE_TTL', 1800),
             'api_key' => env('BEACON_ACCESS_TOKEN'),
+            'api_timeout' => env('BEACON_API_TIMEOUT', 3000), // We recommend no less than 100ms no greater than 3000ms (3s)
         ],
     ],
 ];
