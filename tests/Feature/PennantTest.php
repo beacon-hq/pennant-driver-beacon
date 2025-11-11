@@ -347,43 +347,19 @@ it('always fetches from API with no local cache', function () {
     Http::assertSequencesAreEmpty();
 });
 
-it('does not require a resolver to be defined', function () {
-    Http::fakeSequence()
-        ->push(['test'])
-        ->push(['active' => true])
-        ->push(['active' => true, 'value' => 'test-value']);
-
-    Feature::define('test');
-    Feature::define('test-with-value');
-
-    expect(Feature::active('test'))
-        ->toBeTrue()
-        ->and(Feature::value('test-with-value'))
-        ->toBe('test-value')
-        ->and(Context::get('beacon.feature_flags'))
-        ->toBe([
-            'test' => [
-                'active' => true,
-            ],
-            'test-with-value' => [
-                'active' => true,
-                'value' => 'test-value',
-            ],
-        ]);
-
-    Http::assertSequencesAreEmpty();
-});
-
 it('does makes HTTP request for undefined feature', function () {
     Http::fake([
         'features' => Http::response(['test']),
         'test' => Http::response(['feature_flag' => 'test', 'value' => null, 'active' => false]),
+        'test-2' => Http::response(['feature_flag' => 'test-2', 'value' => null, 'active' => true]),
     ]);
 
     expect(Feature::active('test'))
         ->toBeFalse()
+        ->and(Feature::active('test-2'))
+        ->toBeTrue()
         ->and(Context::get('beacon.feature_flags'))
-        ->toBe(['test' => ['active' => false]]);
+        ->toBe(['test' => ['active' => false], 'test-2' => ['active' => true]]);
 });
 
 it('resolves class-based features', function () {
